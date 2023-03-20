@@ -1,5 +1,10 @@
 import puppeteer, { Puppeteer } from "puppeteer";
-import PromptSync from "prompt-sync";
+import readline from 'readline';
+
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout
+});
 
 let pageNumber = 1;
 
@@ -42,22 +47,24 @@ const scrapeQuotes = async () => {
         console.log(quotes);
     };
 
-    const nextPagePrompt = () => {
-        const prompt = PromptSync();
-
-        //ask user if they want to scrape next page
-        const response = prompt("Do you want to scrape the next page? \n Enter 'y' for yes \n Enter any other key to exit. \n");
-
-        if(response === "y"){
-            //click on the 'next' (page) button
-            page.click(".pager > .next > a");
-            getQuotes();
-            nextPagePrompt();
-        }else{
-            //close the browser
+    async function nextPagePrompt() {
+        // ask user if they want to scrape next page
+        rl.question("Do you want to scrape the next page? \n Enter 'y' for yes \n Enter any other key to exit. \n", async (response) => {
+          if (response === "y") {
+            // click on the 'next' (page) button
+            await Promise.all([
+              page.waitForNavigation({ waitUntil: "networkidle0" }),
+              page.click(".pager > .next > a"),
+            ]);
+            await getQuotes();
+            await nextPagePrompt();
+          } else {
+            // close the browser
             browser.close();
-        }
-    }
+          }
+          rl.close();
+        });
+    };
 
     // get page data
     async function run() {
@@ -65,7 +72,6 @@ const scrapeQuotes = async () => {
         nextPagePrompt();
     }
     run();
-    
 };
 
 // start the scraping
