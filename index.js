@@ -52,7 +52,7 @@ const scrapeQuotes = async () => {
             //click on the 'next' (page) button
             page.click(".pager > .next > a");
             getQuotes();
-            // nextPagePrompt();
+            nextPagePrompt();
         }else{
             //close the browser
             browser.close();
