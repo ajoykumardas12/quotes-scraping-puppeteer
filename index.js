@@ -36,8 +36,14 @@ const scrapeQuotes = async () => {
                 //fetch the sub elements of quote
                 const text = quote.querySelector(".text").innerText;
                 const author = quote.querySelector(".author").innerText;
+                const tagsList = quote.querySelectorAll(".tags .tag");
 
-                return {text, author};
+                const tags =  [];
+                Array.from(tagsList).map((tag) => {
+                    const currentTag = tag.innerText;
+                    tags.push(currentTag);
+                })
+                return {text, author, tags};
             });
         });
 
@@ -51,18 +57,30 @@ const scrapeQuotes = async () => {
         // ask user if they want to scrape next page
         rl.question("Do you want to scrape the next page? \n Enter 'y' for yes \n Enter any other key to exit. \n", async (response) => {
           if (response === "y") {
-            // click on the 'next' (page) button
-            await Promise.all([
-              page.waitForNavigation({ waitUntil: "networkidle0" }),
-              page.click(".pager > .next > a"),
-            ]);
-            await getQuotes();
-            await nextPagePrompt();
+            // check if next button exists
+            const nextButton = await page.$(".pager > .next > a");
+            if (nextButton) {
+                // click on the 'next' (page) button
+                await Promise.all([
+                page.waitForNavigation({ waitUntil: "networkidle0" }),
+                page.click(".pager > .next > a"),
+                ]);
+                await getQuotes();
+                await nextPagePrompt();
+            }
+            else{
+                //no more pages
+                console.log("No more pages to scrape");
+                // close the readline interface and browser
+                rl.close();
+                browser.close();
+            }
           } else {
-            // close the browser
+            // close the readline interface and browser
+            rl.close();
             browser.close();
           }
-          rl.close();
+
         });
     };
 
